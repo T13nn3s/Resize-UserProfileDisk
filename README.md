@@ -1,37 +1,57 @@
-## Welcome to GitHub Pages
+# Resize-UserProfileDisk
+This Powershell Script is reclaiming white space from User Profile Disk without the need for the installation of the Hyper-V role. This script is scanning recursively for VHDX-files from the selected path. When the User Profile Disk is being used by another process this script will skip this UPD from compacting. This script is compacting the VHDX-files with the DISKPART utility. The script can perform VHDX file defragmentation if this parameter is used. This script has also the possibility to empty white space if this parameter is being used.
 
-You can use the [editor on GitHub](https://github.com/T13nn3s/PowershellScripts/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+## Compact VHDX-files with Powershell
+It is a huge challenge to compact User Profile Disks (and VHDX files in common), without the use of the Hyper-V role installed. If you have any recommendations or other improvements to this script, please let me know!
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+## MFT (Master File Table)
+On all NFTS formatted file systems, information about a file, its creation date, size, permissions, and similar information is stored in the MFT (Master File Table). This file is placed in the middle of the disk and therefore a compact process may stop when it hits the MFT. It is not possible to compact along with the MFT. If you have a solution for moving the MFT to the end of the used space, please let me know or add it as your contribution to this script
 
-### Markdown
+# Changelog
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+## [3.2] 26 march 2020
 
-```markdown
-Syntax highlighted code block
+### Fixed
+- Sometimes path is not working
+- Problem with VHDX-files not all dismounting
 
-# Header 1
-## Header 2
-### Header 3
+### Change
+- Code cleanup
 
-- Bulleted
-- List
+## [3.1] 15 october 2019
 
-1. Numbered
-2. List
+## Fixed 
+- SingleVhdxFile not functioning fixed
+- Fixed the creation of double logfiles
+- Various small bugfixes
 
-**Bold** and _Italic_ and `Code` text
+## [3.0] 14 october 2019
+Script has been rewritten.
 
-[Link](url) and ![Image](src)
-```
+### Added 
+- Parameter 'SingleVhdxFile'. With this parameter it is now possible to compact a single VHDX file.
+- Parameter 'IncludeTemplate'. User Profile Disk template can be included (UHVHD-Template.vhdx).
+- Parameter 'Defrag'. VHDX-files can be defragmented prior to compacting (defrag.exe)
+- Parameter 'ZeroFreeSpace'. For optimal space saving, a zero free space can be executed for removed bits. (sdelete.exe is needed!)
+- Write-Log function added
+- Test-FileIsLocked function added
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+### Change
+- Logging options are extended
+- VHDX in use control enhanced
+- VHDX file handling has been improved
+- Script must now be opened with Administrator rights.
 
-### Jekyll Themes
+### Fixed
+- Date and time notation.
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/T13nn3s/PowershellScripts/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+## [1.2] 22 june 2019
 
-### Support or Contact
+### Added
+- Adding sizing calculation with before and after compacting
 
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+### Changed
+- Calculation will be exported to savings.csv file
+
+## [1.0] 15 june 2019
+Initial release of the script.
