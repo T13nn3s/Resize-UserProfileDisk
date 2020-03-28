@@ -346,8 +346,18 @@ function Resize-UserProfileDisk {
                 try {
                     Start-sleep -Seconds 10
                     Write-Log -severity Information -message "Defrag: Try to dismount VHDX-file $vhdx..."
-                    Dismount-DiskImage $vhdx | Out-Null
-                    Write-Log -severity Information -message "Defrag: Try to dismount VHDX-file $vhdx... Done"
+                    try {
+                        $mountedupd = Get-Volume | Where-Object filesystemlabel -eq "User Disk"
+                        $mountedupd | ForEach-Object {
+                            Get-DiskImage -DevicePath  $_.Path.trimend('\') -EA SilentlyContinue
+                        } | Dismount-DiskImage
+                        Write-Log -severity Information -message "Defrag: Try to dismount VHDX-file $vhdx... Done"
+                    }
+                    Catch {
+                        $error.clear()
+                        $ErrorMessage = $_.exception.Message
+                        Write-Log -severity Error -message $errormessage
+                    }
                 }
                 Catch {
                     $error.clear()
@@ -413,18 +423,22 @@ function Resize-UserProfileDisk {
                                                 
                 Write-Log -severity Information -message "SDelete: Zero out unused space of $vhdx done..."
                     
+                Write-Log -severity Information -message "SDelete: Try to dismount VHDX-file $vhdx..."
                 try {
-                    Write-Log -severity Information -message "SDelete: Try to dismount VHDX-file $vhdx..."
-                    Dismount-DiskImage $vhdx | Out-Null
-                    Write-Log -severity Information -message "SDelete: Try to dismount VHDX-file $vhdx... Done"
+                    $mountedupd = Get-Volume | Where-Object filesystemlabel -eq "User Disk"
+                    $mountedupd | ForEach-Object {
+                        Get-DiskImage -DevicePath  $_.Path.trimend('\') -EA SilentlyContinue
+                    } | Dismount-DiskImage
                 }
                 Catch {
                     $error.clear()
-                    $errormessage = $_.exception.message
-                    Write-Log -severity Information -message "SDelete: Try to dismount VHDX-file $vhdx... Failed. Error: $errormessage" 
-                    return
-                }   
-            }
+                    $ErrorMessage = $_.exception.Message
+                    Write-Log -severity Error -message $errormessage
+                }
+                 
+                #endregion Check mounted UPDs 
+                Write-Log -severity Information -message "SDelete: Try to dismount VHDX-file $vhdx... Done"
+            } 
         }
 
         #startregion Diskpart is compacting the .vhdx-file(s)
@@ -469,7 +483,7 @@ function Resize-UserProfileDisk {
                 Write-Log -severity Error -message $errormessage
             }
         }
-        #endregion Check mounted UPDs 
+        #endregion Check mounted UPDs
 
         # Calculate file 
         $measure_after = ((Get-ChildItem $path -Recurse | Where-Object { $_.name -notlike "UVHD-template.vhdx" -and $_.Extension -like "*.vhdx" } | Measure-Object Length -s).Sum) / 1GB
@@ -510,4 +524,4 @@ function Resize-UserProfileDisk {
         Write-Log -severity Information -message "Resizing-UserProfileDisk script ending..."
         Write-Log -severity Information -message "---------- ENDING --------"
     } # End 
-} # End Resize-UserProfileDisk function
+} # End Resize-UserProfileDisk function 
