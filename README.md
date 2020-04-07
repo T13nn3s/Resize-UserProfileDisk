@@ -4,7 +4,7 @@ This Powershell Script is reclaiming white space from User Profile Disk without 
 # How to use
 First, you need to load this function into your Powershell session.
 ```powershell
-Import-Module .\Resize-UserProfileDisk
+Import-Module .\Resize-UserProfileDisk.ps1
 ```
 Now you can use this function. If you only want to shrink the VHDX-files in an specified location. The script is recursive checking the location for VHDX-files. 
 ```powershell
