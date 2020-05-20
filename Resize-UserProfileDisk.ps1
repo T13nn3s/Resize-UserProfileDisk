@@ -311,7 +311,7 @@ function Resize-UserProfileDisk {
                 try {
                     Write-Log -severity Information -message " "
                     Write-Log -severity Information -message "Defrag: Try to mount VHDX-file $vhdx..."
-                    Mount-DiskImage $vhdx | Out-Null
+                    $MountResult = Mount-DiskImage $vhdx | Out-Null
                     Start-Sleep -Seconds 7
                     Write-Log -severity Information -message "Defrag: Try to mount VHDX-file $vhdx... Done"
                 }
@@ -324,7 +324,7 @@ function Resize-UserProfileDisk {
 
                 try {
                     Write-Log -severity Information -message "Defrag: Checking for driveletter mounted $vhdx..." 
-                    $DriveLetter = Get-CimInstance win32_volume | Where-Object { $_.label -like "User Disk" } | Select-Object -ExpandProperty Caption             
+                    $DriveLetter = ($MountResult | Get-Volume).DriveLetter
                     Write-Log -severity Information -message "Defrag: Checking for driveletter mounted $vhdx... Done. Detected driveletter: $Driveletter"
                 } 
                 Catch {
@@ -347,10 +347,7 @@ function Resize-UserProfileDisk {
                     Start-sleep -Seconds 10
                     Write-Log -severity Information -message "Defrag: Try to dismount VHDX-file $vhdx..."
                     try {
-                        $mountedupd = Get-Volume | Where-Object filesystemlabel -eq "User Disk"
-                        $mountedupd | ForEach-Object {
-                            Get-DiskImage -DevicePath  $_.Path.trimend('\') -EA SilentlyContinue
-                        } | Dismount-DiskImage
+                        Dismount-DiskImage $vhdx | Out-Null
                         Write-Log -severity Information -message "Defrag: Try to dismount VHDX-file $vhdx... Done"
                     }
                     Catch {
@@ -391,7 +388,7 @@ function Resize-UserProfileDisk {
                 try {
                     Write-Log -severity Information -message " "
                     Write-Log -severity Information -message "SDelete: Try to mount VHDX-file $vhdx..."
-                    Mount-DiskImage $vhdx | Out-Null
+                    $MountResult = Mount-DiskImage $vhdx | Out-Null
                     Start-Sleep -Seconds 7
                     Write-Log -severity Information -message "SDelete: Try to mount VHDX-file $vhdx... Done"
                 }
@@ -403,7 +400,7 @@ function Resize-UserProfileDisk {
                 }
 
                 try {
-                    $DriveLetter = Get-CimInstance win32_volume | Where-Object { $_.label -like "User Disk" } | Select-Object -ExpandProperty Caption             
+                    $DriveLetter = ($MountResult | Get-Volume).DriveLetter
                     Write-Log -severity Information -message "SDelete: Checking for driveletter mounted $vhdx..." 
                     Write-Log -severity Information -message "SDelete: Checking for driveletter mounted $vhdx... Done. Detected driveletter: $Driveletter"
                 } 
@@ -425,10 +422,7 @@ function Resize-UserProfileDisk {
                     
                 Write-Log -severity Information -message "SDelete: Try to dismount VHDX-file $vhdx..."
                 try {
-                    $mountedupd = Get-Volume | Where-Object filesystemlabel -eq "User Disk"
-                    $mountedupd | ForEach-Object {
-                        Get-DiskImage -DevicePath  $_.Path.trimend('\') -EA SilentlyContinue
-                    } | Dismount-DiskImage
+                    Dismount-DiskImage $vhdx | Out-Null
                 }
                 Catch {
                     $error.clear()
@@ -475,7 +469,7 @@ function Resize-UserProfileDisk {
             try {
                 $mountedupd | ForEach-Object {
                     Get-DiskImage -DevicePath  $_.Path.trimend('\') -EA SilentlyContinue
-                } | Dismount-DiskImage
+                } | Where-Object ImagePath -notlike *$(([System.Security.Principal.WindowsIdentity]::GetCurrent()).User.Value)* | Dismount-DiskImage
             }
             Catch {
                 $error.clear()
