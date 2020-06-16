@@ -291,7 +291,7 @@ function Resize-UserProfileDisk {
 
             #startregion Check if file is locked
             if ((Test-FileIsLocked -Path $vhdx -ErrorAction SilentlyContinue) -eq $false) {
-                $fileString = 'select vdisk file="' + $UPD + '"' 
+                $fileString = 'select vdisk file="' + $vhdx + '"' 
                 Add-Content -Path diskpart_script.txt $fileString
                 Add-Content diskpart_script.txt "attach vdisk readonly"
                 Add-Content diskpart_script.txt "compact vdisk"
