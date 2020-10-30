@@ -274,7 +274,7 @@ function Resize-UserProfileDisk {
             }
             Else {
                 # Search the folder from top to down on only .vhdx-filesx include UVHD-template.vhdx
-                Write-Log -severity Information -message "IncludeTemplate parameter detected. UHVHD-Template.vhdx will be excluded"
+                Write-Log -severity Information -message "IncludeTemplate parameter detected. UHVHD-Template.vhdx will be included"
                 Write-Log -severity Information -message "Searching for .vhdx-files..."
                 $vhdxFiles = Get-ChildItem $path -Recurse | Where-Object { $_.Extension -like "*.vhdx" } | Select-Object -ExpandProperty Fullname
                 Write-Log -severity Information -message "Searching for .vhdx-files... Done"
