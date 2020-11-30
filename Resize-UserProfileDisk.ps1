@@ -274,7 +274,7 @@ function Resize-UserProfileDisk {
             }
             Else {
                 # Search the folder from top to down on only .vhdx-filesx include UVHD-template.vhdx
-                Write-Log -severity Information -message "IncludeTemplate parameter detected. UHVHD-Template.vhdx will be excluded"
+                Write-Log -severity Information -message "IncludeTemplate parameter detected. UHVHD-Template.vhdx will be included"
                 Write-Log -severity Information -message "Searching for .vhdx-files..."
                 $vhdxFiles = Get-ChildItem $path -Recurse | Where-Object { $_.Extension -like "*.vhdx" } | Select-Object -ExpandProperty Fullname
                 Write-Log -severity Information -message "Searching for .vhdx-files... Done"
@@ -295,6 +295,7 @@ function Resize-UserProfileDisk {
                 Add-Content -Path diskpart_script.txt $fileString
                 Add-Content diskpart_script.txt "attach vdisk readonly"
                 Add-Content diskpart_script.txt "compact vdisk"
+                Add-Content diskpart_script.txt "detach vdisk"
                 Write-Log -severity Information -message "$vhdx is accessible."
                 $vhdxArray.add($vhdx) | Out-Null
             }
@@ -312,8 +313,8 @@ function Resize-UserProfileDisk {
                 try {
                     Write-Log -severity Information -message " "
                     Write-Log -severity Information -message "Defrag: Try to mount VHDX-file $vhdx..."
-                    $MountResult = Mount-DiskImage $vhdx | Out-Null
-                    Start-Sleep -Seconds 7
+                    $MountResult = Mount-DiskImage $vhdx
+                    Start-Sleep -Seconds 15
                     Write-Log -severity Information -message "Defrag: Try to mount VHDX-file $vhdx... Done"
                 }
                 Catch {
@@ -325,7 +326,7 @@ function Resize-UserProfileDisk {
 
                 try {
                     Write-Log -severity Information -message "Defrag: Checking for driveletter mounted $vhdx..." 
-                    $DriveLetter = ($MountResult | Get-Volume).DriveLetter
+                    $DriveLetter = ($MountResult | Get-Disk | Get-Partition).DriveLetter
                     Write-Log -severity Information -message "Defrag: Checking for driveletter mounted $vhdx... Done. Detected driveletter: $Driveletter"
                 } 
                 Catch {
@@ -335,7 +336,7 @@ function Resize-UserProfileDisk {
                     return               
                 }                    
                 Write-Log -severity Information -message "Defrag: Starting Defrag of $vhdx... Moutend with driveletter $DriveLetter"
-                defrag.exe $Driveletter.Split("\")[0] -x
+                defrag.exe $($Driveletter + ":") -x
 
                 Do {
                     $defragging = Get-Process defrag.exe -ErrorAction SilentlyContinue
@@ -389,7 +390,7 @@ function Resize-UserProfileDisk {
                 try {
                     Write-Log -severity Information -message " "
                     Write-Log -severity Information -message "SDelete: Try to mount VHDX-file $vhdx..."
-                    $MountResult = Mount-DiskImage $vhdx | Out-Null
+                    $MountResult = Mount-DiskImage $vhdx
                     Start-Sleep -Seconds 7
                     Write-Log -severity Information -message "SDelete: Try to mount VHDX-file $vhdx... Done"
                 }
@@ -401,7 +402,7 @@ function Resize-UserProfileDisk {
                 }
 
                 try {
-                    $DriveLetter = ($MountResult | Get-Volume).DriveLetter
+                    $DriveLetter = ($MountResult | Get-Disk | Get-Partition).DriveLetter
                     Write-Log -severity Information -message "SDelete: Checking for driveletter mounted $vhdx..." 
                     Write-Log -severity Information -message "SDelete: Checking for driveletter mounted $vhdx... Done. Detected driveletter: $Driveletter"
                 } 
@@ -412,7 +413,7 @@ function Resize-UserProfileDisk {
                     return               
                 }                    
                 Write-Log -severity Information -message "SDelete: Starting zero out of unused space from $vhdx... Moutend with driveletter $DriveLetter"
-                .\sdelete.exe -z -c $Driveletter.Split("\")[0] /AcceptEULA
+                .\sdelete.exe -z -c $($Driveletter + ":") /AcceptEULA
 
                 Do {
                     $sdelete = Get-Process sdelete.exe -ErrorAction SilentlyContinue
@@ -490,7 +491,8 @@ function Resize-UserProfileDisk {
               
         $timer.Stop()
         $ElapsedTime = "$($timer.Elapsed.Hours) hour, $($timer.Elapsed.Minutes) minutes and $($timer.Elapsed.Seconds) Seconds"
-        $FilesCount = $vhdxFiles.count
+        $FilesCount = $vhdxArray.count
+        $FilesCountTotal = $vhdxFiles.count
 
         $ObjCalc = New-Object PSObject
         $ObjCalc | add-member Noteproperty "Date" $Date
@@ -498,24 +500,13 @@ function Resize-UserProfileDisk {
         $ObjCalc | add-member NoteProperty "Size Before (GB)" $measure_before
         $ObjCalc | Add-Member NoteProperty "Size After (GB)"  $measure_after
         $ObjCalc | add-member Noteproperty "Savings (GB)"  $savings
-        $ObjCalc | add-member NoteProperty "Processed Files" $vhdxArray.count
+        $ObjCalc | add-member NoteProperty "Processed Files" $FilesCount
         $ObjCalc | add-member NoteProperty "Script Runtime" $ElapsedTime
         $Calc.Add($ObjCalc)
         $ObjCalc | Export-Csv savings.csv -Append -NoTypeInformation -Delimiter ";"
 
-        # Clear script files
-        try {
-            Clear-Content $PSScriptRoot\diskpart_script.txt -Force # Clearing diskpart script
-            Write-log -severity Information -message "diskpart_script.txt cleared..."
-        }
-        Catch {
-            $error.clear()
-            $ErrorMessage = $_.exception.Message
-            Write-Log -severity Error -message "clearing diskpart_script.txt failed. Error: $errormessage"
-        }
-
         Write-Log -severity Information -message "Script has an elapsed time of $ElapsedTime"
-        Write-Log -severity Information -message "Script has processed $filescount files"
+        Write-Log -severity Information -message "Script has processed $filescount of $FilesCountTotal files"
         Write-Log -severity Information -message "Resizing-UserProfileDisk script ending..."
         Write-Log -severity Information -message "---------- ENDING --------"
     } # End 
