@@ -1,3 +1,6 @@
+> **Warning**
+> This repository has been archived and is no longer actively maintained.
+
 # Shrink UPD or other VHDX with Resize-UserProfileDisk
 This Powershell Script is reclaiming white space from User Profile Disk without the need for the installation of the Hyper-V role. This script is scanning recursively for VHDX-files from the selected path. When the User Profile Disk is being used by another process this script will skip this UPD from compacting. This script is compacting the VHDX-files with the DISKPART utility. The script can perform VHDX file defragmentation if this parameter is used. This script has also the possibility to empty white space if this parameter is being used.
 
